@@ -1,141 +1,659 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Type, Image, Video, Lightbulb, Quote, Star, ChevronDown, FileText, Move, Trash2, Copy, Eye, Save, Layers, Edit3, Upload, X, Check, Plus, Minus } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect, useContext, } from "react";
+import { Type, Image, Video, Lightbulb, Quote, Star, ChevronDown, FileText, Eye, Save, Layers, Upload, Copy, Trash2, } from "lucide-react";
+const clsx = (...classes) => classes.filter(Boolean).join(" ");
+const componentLibrary = [
+    {
+        id: "heading",
+        name: "Heading",
+        icon: Type,
+        color: "bg-blue-600",
+        defaultProps: {
+            content: "Your Heading Here",
+            fontSize: 32,
+            fontWeight: "bold",
+            color: "#1f2937",
+            textAlign: "left",
+        },
+    },
+    {
+        id: "text",
+        name: "Text Block",
+        icon: Type,
+        color: "bg-blue-400",
+        defaultProps: {
+            content: "Add your text content here. Click to edit this text.",
+            fontSize: 16,
+            color: "#374151",
+            lineHeight: 1.6,
+        },
+    },
+    {
+        id: "image",
+        name: "Image",
+        icon: Image,
+        color: "bg-green-500",
+        defaultProps: {
+            src: "",
+            alt: "Educational image",
+            caption: "Click to add image caption",
+        },
+    },
+    {
+        id: "video",
+        name: "Video",
+        icon: Video,
+        color: "bg-red-500",
+        defaultProps: { title: "Click to add video title", url: "" },
+    },
+    {
+        id: "accordion",
+        name: "Accordion",
+        icon: ChevronDown,
+        color: "bg-indigo-500",
+        defaultProps: {
+            items: [
+                {
+                    id: 1,
+                    title: "First Section",
+                    content: "Content for first section",
+                    isOpen: false,
+                },
+                {
+                    id: 2,
+                    title: "Second Section",
+                    content: "Content for second section",
+                    isOpen: false,
+                },
+            ],
+        },
+    },
+    {
+        id: "tabs",
+        name: "Tabs",
+        icon: FileText,
+        color: "bg-cyan-500",
+        defaultProps: {
+            activeTab: 0,
+            tabs: [
+                { id: 1, title: "Tab 1", content: "Content for first tab" },
+                { id: 2, title: "Tab 2", content: "Content for second tab" },
+            ],
+        },
+    },
+    {
+        id: "table",
+        name: "Table",
+        icon: FileText,
+        color: "bg-gray-600",
+        defaultProps: {
+            headers: ["Header 1", "Header 2"],
+            rows: [
+                ["Row 1 Col 1", "Row 1 Col 2"],
+                ["Row 2 Col 1", "Row 2 Col 2"],
+            ],
+        },
+    },
+    {
+        id: "didyouknow",
+        name: "Did You Know",
+        icon: Lightbulb,
+        color: "bg-yellow-500",
+        defaultProps: {
+            title: "Did You Know?",
+            content: "Click to add an interesting fact!",
+        },
+    },
+    {
+        id: "highlight",
+        name: "Highlight Box",
+        icon: Star,
+        color: "bg-pink-500",
+        defaultProps: {
+            content: "Click to add important information",
+            variant: "info",
+        },
+    },
+    {
+        id: "quote",
+        name: "Quote",
+        icon: Quote,
+        color: "bg-purple-500",
+        defaultProps: {
+            text: "Click to add an inspiring quote",
+            author: "Author Name",
+        },
+    },
+];
+const BuilderContext = React.createContext(null);
+const useBuilderContext = () => {
+    const context = useContext(BuilderContext);
+    if (!context)
+        throw new Error("useBuilderContext must be used within a BuilderProvider");
+    return context;
+};
+const Header = ({ previewMode, onTogglePreview, onSave }) => (
+    <header className="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm z-20 flex-shrink-0">
+        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            📖<span className="hidden sm:inline">InstructoHub Magazine Builder</span>
+        </h1>
+        <div className="flex gap-3">
+            <button
+                onClick={onTogglePreview}
+                className={clsx(
+                    "px-4 py-2 rounded-lg flex items-center gap-2 font-semibold transition-colors text-sm",
+                    previewMode
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+            >
+                <Eye size={16} />
+                {previewMode ? "Edit Mode" : "Preview"}
+            </button>
+            <button
+                onClick={onSave}
+                className="px-4 py-2 rounded-lg flex items-center gap-2 font-semibold bg-green-500 text-white hover:bg-green-600 transition-colors text-sm"
+            >
+                <Save size={16} />
+                Save
+            </button>
+        </div>
+    </header>
+);
+const Sidebar = ({ onDragStart }) => (
+    <aside className="w-72 bg-gray-50 border-r border-gray-200 overflow-y-auto p-5">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <Layers size={20} />
+            Components
+        </h2>
+        <p className="text-xs text-gray-500 mb-4">
+            Drag components onto the canvas.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+            {componentLibrary.map((component) => (
+                <SidebarItem
+                    key={component.id}
+                    component={component}
+                    onDragStart={onDragStart}
+                />
+            ))}
+        </div>
+    </aside>
+);
+const SidebarItem = ({ component, onDragStart }) => {
+    const IconComponent = component.icon;
+    return (
+        <div
+            draggable
+            onDragStart={(e) => onDragStart(e, component.id)}
+            className="p-3 bg-white rounded-lg cursor-grab shadow-sm border border-gray-200 text-center transition-all hover:shadow-md hover:-translate-y-0.5"
+        >
+            <div
+                className={clsx(
+                    "w-9 h-9 mx-auto rounded-md flex items-center justify-center mb-2",
+                    component.color
+                )}
+            >
+                <IconComponent size={18} color="white" />
+            </div>
+            <p className="text-xs font-medium text-gray-700">{component.name}</p>
+        </div>
+    );
+};
+const Canvas = ({ components, onDrop, onDragOver, onClick, children }) => (
+    <main className="flex-1 overflow-auto relative bg-gray-100">
+        <div
+            ref={children}
+            className="min-h-full w-full relative bg-white"
+            style={{
+                backgroundImage:
+                    "radial-gradient(circle, #e5e7eb 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+            }}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onClick={onClick}
+        >
+            {components.length === 0 && <EmptyCanvasMessage />}
+            {components.map((c) => (
+                <ComponentRenderer key={c.id} component={c} />
+            ))}
+        </div>
+    </main>
+);
+const EmptyCanvasMessage = () => (
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-gray-400 p-8 pointer-events-none">
+        <Layers size={56} className="mb-4 opacity-50" />
+        <h3 className="text-2xl font-semibold text-gray-500 mb-2">
+            Create Your Magazine Page
+        </h3>
+        <p className="max-w-md">
+            Drag components from the sidebar and position them anywhere.
+        </p>
+    </div>
+);
+const EditableText = ({
+    value,
+    onChange,
+    onBlur,
+    onKeyDown,
+    autoFocus,
+    className,
+    as: Component = "div",
+    placeholder,
+    isEditing,
+    onStartEditing,
+}) => {
+    const handleStartEditing = (e) => {
+        e.stopPropagation();
+        if (onStartEditing) onStartEditing(e);
+    };
+    
+    if (isEditing) {
+        const InputComponent = Component === "textarea" ? "textarea" : "input";
+        return (
+            <InputComponent
+                type="text"
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                onKeyDown={onKeyDown}
+                autoFocus={autoFocus}
+                className={clsx(
+                    className,
+                    "bg-white border-2 border-blue-500 rounded-md focus:outline-none w-full"
+                )}
+                onClick={(e) => e.stopPropagation()}
+            />
+        );
+    }
+    
+    return (
+        <Component
+            className={clsx(className, "cursor-pointer")}
+            onClick={handleStartEditing}
+        >
+            {value || placeholder}
+        </Component>
+    );
+};
+const HeadingComponent = ({
+    component,
+    isEditing,
+    onUpdate,
+    onStartEditing,
+}) => (
+    <EditableText
+        value={component.content}
+        onChange={(e) => onUpdate({ content: e.target.value })}
+        onStartEditing={onStartEditing}
+        isEditing={isEditing}
+        placeholder="Your Heading Here"
+        className="w-full h-full flex items-center p-1"
+        style={{
+            fontSize: `${component.fontSize}px`,
+            fontWeight: component.fontWeight,
+            color: component.color,
+            textAlign: component.textAlign,
+            lineHeight: 1.2,
+        }}
+    />
+);
+const TextBlockComponent = ({
+    component,
+    isEditing,
+    onUpdate,
+    onStartEditing,
+}) => (
+    <EditableText
+        as="textarea"
+        value={component.content}
+        onChange={(e) => onUpdate({ content: e.target.value })}
+        onStartEditing={onStartEditing}
+        isEditing={isEditing}
+        placeholder="Add your text content here..."
+        className="w-full h-full p-2 resize-none bg-transparent"
+        style={{
+            fontSize: `${component.fontSize}px`,
+            color: component.color,
+            lineHeight: component.lineHeight,
+        }}
+    />
+);
+const ImageComponent = ({ component, isEditing, onUpdate, onStartEditing }) => {
+    const fileInputRef = useRef(null);
+    const handleImageUpload = (file) => {
+        if (file && file.type.startsWith("image/")) {
+            const reader = new FileReader();
+            reader.onload = (e) => onUpdate({ src: e.target.result });
+            reader.readAsDataURL(file);
+        }
+    };
+    if (!component.src) {
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                <Upload size={32} className="text-gray-400 mb-2" />
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm font-semibold hover:bg-blue-600"
+                >
+                    Upload Image
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) =>
+                        e.target.files && handleImageUpload(e.target.files[0])
+                    }
+                />
+            </div>
+        );
+    }
+    return (
+        <div className="w-full h-full flex flex-col bg-white rounded-lg overflow-hidden shadow">
+            <img
+                src={component.src}
+                alt={component.alt}
+                className="w-full flex-1 object-cover"
+            />
+            <div className="p-2 bg-white">
+                <EditableText
+                    value={component.caption}
+                    onChange={(e) => onUpdate({ caption: e.target.value })}
+                    onStartEditing={(e) => onStartEditing(e, "caption")}
+                    isEditing={isEditing}
+                    placeholder="Image caption"
+                    className="text-xs text-gray-600 italic text-center w-full"
+                />
+            </div>
+        </div>
+    );
+};
+const ActionToolbar = ({ componentId }) => {
+    const { actions } = useBuilderContext();
+    const handleActionClick = (e, action) => {
+        e.stopPropagation();
+        e.preventDefault();
+        action();
+    };
+    return (
+        <div
+            className="absolute -top-10 left-0 bg-gray-800 text-white rounded-lg shadow-lg flex items-center p-1 z-10"
+            onMouseDown={(e) => e.stopPropagation()}
+        >
+            <button
+                onClick={(e) =>
+                    handleActionClick(e, () => actions.duplicateComponent(componentId))
+                }
+                className="p-1.5 hover:bg-gray-700 rounded"
+                title="Duplicate"
+            >
+                <Copy size={14} />
+            </button>
+            <button
+                onClick={(e) =>
+                    handleActionClick(e, () => actions.deleteComponent(componentId))
+                }
+                className="p-1.5 hover:bg-red-500 rounded"
+                title="Delete"
+            >
+                <Trash2 size={14} />
+            </button>
+        </div>
+    );
+};
+const resizeHandles = [
+    { pos: "top-0 left-0", cursor: "cursor-nwse-resize", id: "nw" },
+    { pos: "top-0 left-1/2", cursor: "cursor-ns-resize", id: "n" },
+    { pos: "top-0 right-0", cursor: "cursor-nesw-resize", id: "ne" },
+    { pos: "left-0 top-1/2", cursor: "cursor-ew-resize", id: "w" },
+    { pos: "right-0 top-1/2", cursor: "cursor-ew-resize", id: "e" },
+    { pos: "bottom-0 left-0", cursor: "cursor-nesw-resize", id: "sw" },
+    { pos: "bottom-0 left-1/2", cursor: "cursor-ns-resize", id: "s" },
+    { pos: "bottom-0 right-0", cursor: "cursor-nwse-resize", id: "se" },
+];
+const ComponentWrapper = ({ component, children }) => {
+    const { actions, state } = useBuilderContext();
+    const { selectedComponent, isResizing, previewMode } = state;
+    const isSelected = selectedComponent === component.id;
+    return (
+        <div
+            style={{
+                left: component.x,
+                top: component.y,
+                width: component.width,
+                height: component.height,
+                zIndex: isSelected ? 100 : component.zIndex,
+                cursor: !isResizing && !previewMode ? "move" : "default",
+            }}
+            className={clsx(
+                "absolute group",
+                isSelected && "outline-2 outline-blue-500 outline-dashed"
+            )}
+            onMouseDown={(e) =>
+                !isResizing && actions.handleComponentMouseDown(e, component.id)
+            }
+            onClick={(e) => {
+                e.stopPropagation();
+                actions.setSelectedComponent(component.id);
+            }}
+        >
+            <div className="relative w-full h-full">{children}</div>
+            {isSelected && !previewMode && (
+                <ActionToolbar componentId={component.id} />
+            )}
+            {isSelected && !previewMode && (
+                <>
+                    {resizeHandles.map(({ pos, cursor, id }) => (
+                        <div
+                            key={id}
+                            className={clsx(
+                                "absolute w-3 h-3 bg-blue-500 border-2 border-white rounded-full z-20",
+                                cursor
+                            )}
+                            style={{
+                                transform: "translate(-50%, -50%)",
+                                ...getHandleStyle(pos),
+                            }}
+                            onMouseDown={(e) => {
+                                e.stopPropagation();
+                                actions.handleResizeStart(e, component.id, id);
+                            }}
+                        />
+                    ))}
+                </>
+            )}
+        </div>
+    );
+};
+const getHandleStyle = (pos) => {
+    const style = {};
+    if (pos.includes("top-0")) style.top = "0%";
+    if (pos.includes("left-0")) style.left = "0%";
+    if (pos.includes("right-0")) style.left = "100%";
+    if (pos.includes("bottom-0")) style.top = "100%";
+    if (pos.includes("left-1/2")) style.left = "50%";
+    if (pos.includes("top-1/2")) style.top = "50%";
+    return style;
+};
+const ComponentRenderer = ({ component }) => {
+    const { state, actions } = useBuilderContext();
+    const { editingComponent } = state;
+    const isEditing =
+        editingComponent && editingComponent.startsWith(component.id);
+    const props = {
+        component,
+        isEditing: isEditing,
+        onUpdate: (updates) => actions.updateComponent(component.id, updates),
+        onStartEditing: (e, field = "main") =>
+            actions.setEditingComponent(
+                field === "main" ? component.id : `${component.id}-${field}`
+            ),
+    };
+    const renderContent = () => {
+        switch (component.type) {
+            case "heading":
+                return <HeadingComponent {...props} />;
+            case "text":
+                return (
+                    <div className="bg-white rounded-lg shadow w-full h-full">
+                        <TextBlockComponent {...props} />
+                    </div>
+                );
+            case "image":
+                return (
+                    <ImageComponent
+                        {...props}
+                        isEditing={editingComponent === `${component.id}-caption`}
+                    />
+                );
+            case "accordion":
+                return (
+                    <div className="bg-white rounded-lg shadow w-full h-full">
+                        <AccordionComponent
+                            {...props}
+                            editingComponent={editingComponent}
+                        />
+                    </div>
+                );
+            default:
+                return (
+                    <div className="p-4 bg-gray-200 rounded-lg flex items-center justify-center h-full">
+                        <p className="text-sm text-gray-600">Component: {component.type}</p>
+                    </div>
+                );
+        }
+    };
+    return (
+        <ComponentWrapper component={component}>{renderContent()}</ComponentWrapper>
+    );
+};
+const AccordionComponent = ({ component, onUpdate, onStartEditing, editingComponent }) => {
+    const toggleItem = (itemId) => {
+        const updatedItems = component.items.map(item => 
+            item.id === itemId ? { ...item, isOpen: !item.isOpen } : item
+        );
+        onUpdate({ items: updatedItems });
+    };
 
+    const updateItemTitle = (itemId, newTitle) => {
+        const updatedItems = component.items.map(item => 
+            item.id === itemId ? { ...item, title: newTitle } : item
+        );
+        onUpdate({ items: updatedItems });
+    };
+
+    const updateItemContent = (itemId, newContent) => {
+        const updatedItems = component.items.map(item => 
+            item.id === itemId ? { ...item, content: newContent } : item
+        );
+        onUpdate({ items: updatedItems });
+    };
+
+    const addItem = () => {
+        const newItem = {
+            id: Date.now(),
+            title: "New Section",
+            content: "Add your content here",
+            isOpen: false
+        };
+        onUpdate({ items: [...component.items, newItem] });
+    };
+
+    const removeItem = (itemId) => {
+        if (component.items.length > 1) {
+            const updatedItems = component.items.filter(item => item.id !== itemId);
+            onUpdate({ items: updatedItems });
+        }
+    };
+
+    return (
+        <div className="w-full h-full bg-white rounded-lg shadow overflow-hidden">
+            <div className="p-3 space-y-1">
+                {component.items.map((item) => (
+                    <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div 
+                            className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+                            onClick={() => toggleItem(item.id)}
+                        >
+                            <EditableText
+                                value={item.title}
+                                onChange={(e) => updateItemTitle(item.id, e.target.value)}
+                                onStartEditing={(e) => {
+                                    e.stopPropagation();
+                                    onStartEditing(e, `title-${item.id}`);
+                                }}
+                                isEditing={editingComponent === `${component.id}-title-${item.id}`}
+                                placeholder="Click to edit section title"
+                                className="flex-1 font-medium text-gray-800 text-sm"
+                            />
+                            <div className="flex items-center gap-1">
+                                {component.items.length > 1 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            removeItem(item.id);
+                                        }}
+                                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                        title="Remove section"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                )}
+                                <ChevronDown 
+                                    size={16} 
+                                    className={clsx(
+                                        "text-gray-400 transition-transform duration-200",
+                                        item.isOpen && "rotate-180"
+                                    )}
+                                />
+                            </div>
+                        </div>
+                        {item.isOpen && (
+                            <div className="p-3 bg-white border-t border-gray-200">
+                                <EditableText
+                                    as="textarea"
+                                    value={item.content}
+                                    onChange={(e) => updateItemContent(item.id, e.target.value)}
+                                    onStartEditing={(e) => onStartEditing(e, `content-${item.id}`)}
+                                    isEditing={editingComponent === `${component.id}-content-${item.id}`}
+                                    placeholder="Click to add content for this section"
+                                    className="w-full text-sm text-gray-600 resize-none bg-transparent min-h-[60px]"
+                                />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+            <div className="p-3 border-t border-gray-100">
+                <button
+                    onClick={addItem}
+                    className="w-full py-2 px-3 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors flex items-center justify-center gap-1"
+                >
+                    + Add Section
+                </button>
+            </div>
+        </div>
+    );
+};
 const InteractiveMagazineBuilder = () => {
     const [components, setComponents] = useState([]);
     const [selectedComponent, setSelectedComponent] = useState(null);
     const [editingComponent, setEditingComponent] = useState(null);
     const [previewMode, setPreviewMode] = useState(false);
-    const [canvasBackground, setCanvasBackground] = useState('#ffffff');
-    const [draggedComponent, setDraggedComponent] = useState(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const [isResizing, setIsResizing] = useState(false);
+    const [draggedComponentType, setDraggedComponentType] = useState(null);
+    const [actionState, setActionState] = useState({
+        isDragging: false,
+        isResizing: false,
+    });
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
     const [resizeHandle, setResizeHandle] = useState(null);
     const canvasRef = useRef(null);
-
-    const componentLibrary = [
-        {
-            id: 'heading',
-            name: 'Heading',
-            icon: Type,
-            color: 'bg-blue-600',
-            defaultProps: {
-                content: 'Your Heading Here',
-                fontSize: 32,
-                fontWeight: 'bold',
-                color: '#1f2937',
-                textAlign: 'left'
-            }
-        },
-        {
-            id: 'text',
-            name: 'Text Block',
-            icon: Type,
-            color: 'bg-blue-400',
-            defaultProps: {
-                content: 'Add your text content here. Click to edit this text and customize it for your students.',
-                fontSize: 16,
-                color: '#374151',
-                lineHeight: 1.6
-            }
-        },
-        {
-            id: 'image',
-            name: 'Image',
-            icon: Image,
-            color: 'bg-green-500',
-            defaultProps: {
-                src: '',
-                alt: 'Educational image',
-                caption: 'Click to add image caption'
-            }
-        },
-        {
-            id: 'accordion',
-            name: 'Accordion',
-            icon: ChevronDown,
-            color: 'bg-indigo-500',
-            defaultProps: {
-                items: [
-                    { id: 1, title: 'First Section', content: 'Content for first section', isOpen: false },
-                    { id: 2, title: 'Second Section', content: 'Content for second section', isOpen: false }
-                ]
-            }
-        },
-        {
-            id: 'tabs',
-            name: 'Tabs',
-            icon: FileText,
-            color: 'bg-cyan-500',
-            defaultProps: {
-                activeTab: 0,
-                tabs: [
-                    { id: 1, title: 'Tab 1', content: 'Content for first tab' },
-                    { id: 2, title: 'Tab 2', content: 'Content for second tab' }
-                ]
-            }
-        },
-        {
-            id: 'table',
-            name: 'Table',
-            icon: FileText,
-            color: 'bg-gray-600',
-            defaultProps: {
-                headers: ['Header 1', 'Header 2', 'Header 3'],
-                rows: [
-                    ['Row 1 Col 1', 'Row 1 Col 2', 'Row 1 Col 3'],
-                    ['Row 2 Col 1', 'Row 2 Col 2', 'Row 2 Col 3']
-                ]
-            }
-        },
-        {
-            id: 'didyouknow',
-            name: 'Did You Know',
-            icon: Lightbulb,
-            color: 'bg-yellow-500',
-            defaultProps: {
-                title: 'Did You Know?',
-                content: 'Click to add an interesting fact that will engage your students!'
-            }
-        },
-        {
-            id: 'highlight',
-            name: 'Highlight Box',
-            icon: Star,
-            color: 'bg-pink-500',
-            defaultProps: {
-                content: 'Click to add important information',
-                variant: 'info'
-            }
-        },
-        {
-            id: 'quote',
-            name: 'Quote',
-            icon: Quote,
-            color: 'bg-purple-500',
-            defaultProps: {
-                text: 'Click to add an inspiring quote',
-                author: 'Author Name'
-            }
-        },
-        {
-            id: 'video',
-            name: 'Video',
-            icon: Video,
-            color: 'bg-red-500',
-            defaultProps: {
-                title: 'Click to add video title',
-                url: '',
-                thumbnail: ''
-            }
-        }
-    ];
-
     const generateId = () => Math.random().toString(36).substr(2, 9);
-
-    const createComponent = (type, x = 50, y = 50) => {
-        const template = componentLibrary.find(comp => comp.id === type);
+    const createComponent = (type, x, y) => {
+        const template = componentLibrary.find((comp) => comp.id === type);
+        if (!template) return null;
         const widthMap = {
             heading: 400,
             text: 320,
@@ -146,7 +664,7 @@ const InteractiveMagazineBuilder = () => {
             table: 500,
             didyouknow: 320,
             highlight: 320,
-            quote: 350
+            quote: 350,
         };
         const heightMap = {
             heading: 50,
@@ -158,7 +676,7 @@ const InteractiveMagazineBuilder = () => {
             table: 200,
             didyouknow: 80,
             highlight: 60,
-            quote: 100
+            quote: 100,
         };
         return {
             id: generateId(),
@@ -168,1559 +686,197 @@ const InteractiveMagazineBuilder = () => {
             width: widthMap[type] || 320,
             height: heightMap[type] || 100,
             zIndex: components.length + 1,
-            ...template.defaultProps
+            ...JSON.parse(JSON.stringify(template.defaultProps)),
         };
     };
-
-    const handleDragStart = (e, componentType) => {
-        setDraggedComponent(componentType);
-        e.dataTransfer.effectAllowed = 'copy';
+    const updateComponent = useCallback(
+        (id, updates) =>
+            setComponents((cs) =>
+                cs.map((c) => (c.id === id ? { ...c, ...updates } : c))
+            ),
+        []
+    );
+    const deleteComponent = useCallback(
+        (id) => {
+            setComponents((cs) => cs.filter((c) => c.id !== id));
+            if (selectedComponent === id) setSelectedComponent(null);
+        },
+        [selectedComponent]
+    );
+    const duplicateComponent = useCallback(
+        (id) => {
+            const compToDup = components.find((c) => c.id === id);
+            if (compToDup) {
+                const newComp = {
+                    ...JSON.parse(JSON.stringify(compToDup)),
+                    id: generateId(),
+                    x: compToDup.x + 20,
+                    y: compToDup.y + 20,
+                    zIndex: components.length + 1,
+                };
+                setComponents((cs) => [...cs, newComp]);
+                setSelectedComponent(newComp.id);
+            }
+        },
+        [components]
+    );
+    const handleSidebarDragStart = (e, componentType) => {
+        setDraggedComponentType(componentType);
     };
-
     const handleCanvasDrop = (e) => {
         e.preventDefault();
-        if (!draggedComponent || previewMode) return;
-
+        if (!draggedComponentType || !canvasRef.current) return;
         const rect = canvasRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-
-        const newComponent = createComponent(draggedComponent, x, y);
-        setComponents([...components, newComponent]);
-        setSelectedComponent(newComponent.id);
-        setDraggedComponent(null);
+        const newComponent = createComponent(draggedComponentType, x, y);
+        if (newComponent) {
+            setComponents((cs) => [...cs, newComponent]);
+            setSelectedComponent(newComponent.id);
+        }
+        setDraggedComponentType(null);
     };
-
-    const handleCanvasDragOver = (e) => {
-        e.preventDefault();
-    };
-
+    const handleCanvasDragOver = (e) => e.preventDefault();
     const handleComponentMouseDown = (e, componentId) => {
-        if (previewMode || editingComponent) return;
-
+        if (
+            previewMode ||
+            (editingComponent && editingComponent.startsWith(componentId)) ||
+            actionState.isResizing
+        )
+            return;
         e.preventDefault();
         e.stopPropagation();
-
-        const component = components.find(c => c.id === componentId);
+        const component = components.find((c) => c.id === componentId);
+        if (!component || !canvasRef.current) return;
         const rect = canvasRef.current.getBoundingClientRect();
-
         setSelectedComponent(componentId);
-        setIsDragging(true);
+        setActionState({ isDragging: true, isResizing: false });
+        if (editingComponent) setEditingComponent(null);
         setDragOffset({
             x: e.clientX - rect.left - component.x,
-            y: e.clientY - rect.top - component.y
+            y: e.clientY - rect.top - component.y,
         });
     };
-
     const handleResizeStart = (e, componentId, handle) => {
         e.preventDefault();
         e.stopPropagation();
-
         setSelectedComponent(componentId);
-        setIsResizing(true);
+        setActionState({ isDragging: false, isResizing: true });
         setResizeHandle(handle);
     };
-
-    const handleMouseMove = useCallback((e) => {
-        if (isDragging && selectedComponent && !isResizing) {
+    const handleMouseMove = useCallback(
+        (e) => {
+            if (!canvasRef.current) return;
             const rect = canvasRef.current.getBoundingClientRect();
-            const newX = e.clientX - rect.left - dragOffset.x;
-            const newY = e.clientY - rect.top - dragOffset.y;
-
-            setComponents(components.map(comp =>
-                comp.id === selectedComponent
-                    ? { ...comp, x: Math.max(0, newX), y: Math.max(0, newY) }
-                    : comp
-            ));
-        } else if (isResizing && selectedComponent) {
-            const rect = canvasRef.current.getBoundingClientRect();
-            const component = components.find(c => c.id === selectedComponent);
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
-
-            let updates = {};
-
-            if (resizeHandle === 'se') {
-                updates.width = Math.max(100, mouseX - component.x);
-                updates.height = Math.max(50, mouseY - component.y);
-            } else if (resizeHandle === 'e') {
-                updates.width = Math.max(100, mouseX - component.x);
-            } else if (resizeHandle === 's') {
-                updates.height = Math.max(50, mouseY - component.y);
+            if (actionState.isDragging && selectedComponent) {
+                const newX = mouseX - dragOffset.x;
+                const newY = mouseY - dragOffset.y;
+                updateComponent(selectedComponent, {
+                    x: Math.max(0, newX),
+                    y: Math.max(0, newY),
+                });
+            } else if (actionState.isResizing && selectedComponent) {
+                const component = components.find((c) => c.id === selectedComponent);
+                if (!component) return;
+                let { x, y, width, height } = component;
+                const minWidth = 50,
+                    minHeight = 50;
+                if (resizeHandle.includes("e")) width = Math.max(minWidth, mouseX - x);
+                if (resizeHandle.includes("s"))
+                    height = Math.max(minHeight, mouseY - y);
+                if (resizeHandle.includes("w")) {
+                    const newWidth = x + width - mouseX;
+                    if (newWidth > minWidth) {
+                        width = newWidth;
+                        x = mouseX;
+                    }
+                }
+                if (resizeHandle.includes("n")) {
+                    const newHeight = y + height - mouseY;
+                    if (newHeight > minHeight) {
+                        height = newHeight;
+                        y = mouseY;
+                    }
+                }
+                updateComponent(selectedComponent, { x, y, width, height });
             }
-
-            setComponents(components.map(comp =>
-                comp.id === selectedComponent ? { ...comp, ...updates } : comp
-            ));
-        }
-    }, [isDragging, isResizing, selectedComponent, dragOffset, resizeHandle, components]);
-
-    const handleMouseUp = useCallback(() => {
-        setIsDragging(false);
-        setIsResizing(false);
-        setResizeHandle(null);
-    }, []);
-
-    React.useEffect(() => {
-        if (isDragging || isResizing) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-            return () => {
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-            };
-        }
-    }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
-
+        },
+        [
+            actionState,
+            selectedComponent,
+            components,
+            dragOffset,
+            resizeHandle,
+            updateComponent,
+        ]
+    );
+    const handleMouseUp = useCallback(
+        () => setActionState({ isDragging: false, isResizing: false }),
+        []
+    );
     const handleCanvasClick = (e) => {
         if (e.target === canvasRef.current) {
             setSelectedComponent(null);
             setEditingComponent(null);
         }
     };
-
-    const updateComponent = (id, updates) => {
-        setComponents(components.map(comp =>
-            comp.id === id ? { ...comp, ...updates } : comp
-        ));
-    };
-
-    const deleteComponent = (id) => {
-        setComponents(components.filter(comp => comp.id !== id));
-        setSelectedComponent(null);
-        setEditingComponent(null);
-    };
-
-    const duplicateComponent = (id) => {
-        const component = components.find(comp => comp.id === id);
-        if (component) {
-            const newComponent = {
-                ...component,
-                id: generateId(),
-                x: component.x + 20,
-                y: component.y + 20,
-                zIndex: Math.max(...components.map(c => c.zIndex)) + 1
+    const handleSetEditing = useCallback((id) => {
+        setEditingComponent(id);
+        if (id) setSelectedComponent(id.split("-")[0]);
+    }, []);
+    useEffect(() => {
+        if (actionState.isDragging || actionState.isResizing) {
+            document.addEventListener("mousemove", handleMouseMove);
+            document.addEventListener("mouseup", handleMouseUp);
+            return () => {
+                document.removeEventListener("mousemove", handleMouseMove);
+                document.removeEventListener("mouseup", handleMouseUp);
             };
-            setComponents([...components, newComponent]);
-            setSelectedComponent(newComponent.id);
         }
+    }, [actionState, handleMouseMove, handleMouseUp]);
+    const contextValue = {
+        state: {
+            components,
+            selectedComponent,
+            editingComponent,
+            previewMode,
+            isResizing: actionState.isResizing,
+        },
+        actions: {
+            updateComponent,
+            setEditingComponent: handleSetEditing,
+            setSelectedComponent,
+            deleteComponent,
+            duplicateComponent,
+            handleResizeStart,
+            handleComponentMouseDown,
+        },
     };
-
-    const startEditing = (componentId) => {
-        setEditingComponent(componentId);
-    };
-
-    const stopEditing = () => {
-        setEditingComponent(null);
-    };
-
-    const addAccordionItem = (componentId) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'accordion') {
-            const newItem = {
-                id: Date.now(),
-                title: 'New Section',
-                content: 'Add content here',
-                isOpen: false
-            };
-            updateComponent(componentId, {
-                items: [...component.items, newItem]
-            });
-        }
-    };
-
-    const removeAccordionItem = (componentId, itemId) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'accordion') {
-            updateComponent(componentId, {
-                items: component.items.filter(item => item.id !== itemId)
-            });
-        }
-    };
-
-    const updateAccordionItem = (componentId, itemId, updates) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'accordion') {
-            updateComponent(componentId, {
-                items: component.items.map(item =>
-                    item.id === itemId ? { ...item, ...updates } : item
-                )
-            });
-        }
-    };
-
-    const addTab = (componentId) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'tabs') {
-            const newTab = {
-                id: Date.now(),
-                title: 'New Tab',
-                content: 'Add tab content here'
-            };
-            updateComponent(componentId, {
-                tabs: [...component.tabs, newTab]
-            });
-        }
-    };
-
-    const removeTab = (componentId, tabId) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'tabs' && component.tabs.length > 1) {
-            const newTabs = component.tabs.filter(tab => tab.id !== tabId);
-            updateComponent(componentId, {
-                tabs: newTabs,
-                activeTab: Math.min(component.activeTab, newTabs.length - 1)
-            });
-        }
-    };
-
-    const addTableRow = (componentId) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'table') {
-            const newRow = new Array(component.headers.length).fill('New cell');
-            updateComponent(componentId, {
-                rows: [...component.rows, newRow]
-            });
-        }
-    };
-
-    const addTableColumn = (componentId) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'table') {
-            updateComponent(componentId, {
-                headers: [...component.headers, 'New Header'],
-                rows: component.rows.map(row => [...row, 'New cell'])
-            });
-        }
-    };
-
-    const removeTableRow = (componentId, rowIndex) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'table' && component.rows.length > 1) {
-            updateComponent(componentId, {
-                rows: component.rows.filter((_, index) => index !== rowIndex)
-            });
-        }
-    };
-
-    const removeTableColumn = (componentId, colIndex) => {
-        const component = components.find(c => c.id === componentId);
-        if (component && component.type === 'table' && component.headers.length > 1) {
-            updateComponent(componentId, {
-                headers: component.headers.filter((_, index) => index !== colIndex),
-                rows: component.rows.map(row => row.filter((_, index) => index !== colIndex))
-            });
-        }
-    };
-
-    const handleImageUpload = (componentId, file) => {
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                updateComponent(componentId, { src: e.target.result });
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const EditableText = ({ component, field, placeholder, style = {} }) => {
-        const [value, setValue] = useState(component[field]);
-
-        if (editingComponent === component.id) {
-            return (
-                <div style={{ position: 'relative' }}>
-                    {field === 'content' && component.type === 'text' ? (
-                        <textarea
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            onBlur={() => {
-                                updateComponent(component.id, { [field]: value });
-                                stopEditing();
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && e.ctrlKey) {
-                                    updateComponent(component.id, { [field]: value });
-                                    stopEditing();
-                                }
-                                if (e.key === 'Escape') {
-                                    setValue(component[field]);
-                                    stopEditing();
-                                }
-                            }}
-                            autoFocus
-                            style={{
-                                ...style,
-                                border: '2px solid #3b82f6',
-                                borderRadius: '4px',
-                                padding: '8px',
-                                resize: 'none',
-                                width: '100%',
-                                height: '80px',
-                                fontFamily: 'inherit'
-                            }}
-                            placeholder={placeholder}
-                        />
-                    ) : (
-                        <input
-                            type="text"
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            onBlur={() => {
-                                updateComponent(component.id, { [field]: value });
-                                stopEditing();
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    updateComponent(component.id, { [field]: value });
-                                    stopEditing();
-                                }
-                                if (e.key === 'Escape') {
-                                    setValue(component[field]);
-                                    stopEditing();
-                                }
-                            }}
-                            autoFocus
-                            style={{
-                                ...style,
-                                border: '2px solid #3b82f6',
-                                borderRadius: '4px',
-                                padding: '4px 8px',
-                                width: '100%',
-                                fontFamily: 'inherit',
-                                background: 'white'
-                            }}
-                            placeholder={placeholder}
-                        />
-                    )}
-                </div>
-            );
-        }
-
-        return (
-            <div
-                style={{ ...style, cursor: previewMode ? 'default' : 'pointer' }}
-                onClick={(e) => {
-                    if (!previewMode) {
-                        e.stopPropagation();
-                        startEditing(component.id);
-                    }
-                }}
-                title={previewMode ? '' : 'Click to edit'}
-            >
-                {component[field] || placeholder}
-            </div>
-        );
-    };
-
-    const ComponentRenderer = ({ component }) => {
-        const isSelected = selectedComponent === component.id && !previewMode;
-        const isEditing = editingComponent === component.id;
-
-        const commonStyle = {
-            position: 'absolute',
-            left: component.x,
-            top: component.y,
-            width: component.width,
-            height: component.height,
-            zIndex: component.zIndex,
-            cursor: previewMode ? 'default' : (isDragging || isResizing ? 'grabbing' : 'grab')
-        };
-
-        const selectionStyle = isSelected ? {
-            outline: '2px solid #3b82f6',
-            outlineOffset: '2px'
-        } : {};
-
-        let content;
-
-        switch (component.type) {
-            case 'heading':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            padding: '4px',
-                            display: 'flex',
-                            alignItems: 'center'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        <EditableText
-                            component={component}
-                            field="content"
-                            placeholder="Click to edit heading"
-                            style={{
-                                fontSize: component.fontSize,
-                                fontWeight: component.fontWeight,
-                                color: component.color,
-                                textAlign: component.textAlign,
-                                margin: 0,
-                                lineHeight: 1.2,
-                                width: '100%'
-                            }}
-                        />
-                    </div>
-                );
-                break;
-
-            case 'accordion':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        {component.items.map((item, index) => (
-                            <div key={item.id}>
-                                <div
-                                    style={{
-                                        padding: '10px',
-                                        backgroundColor: '#f9fafb',
-                                        borderBottom: item.isOpen ? '1px solid #e5e7eb' : (index < component.items.length - 1 ? '1px solid #e5e7eb' : 'none'),
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        cursor: 'pointer'
-                                    }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        updateAccordionItem(component.id, item.id, { isOpen: !item.isOpen });
-                                    }}
-                                >
-                                    {editingComponent === `${component.id}-${item.id}-title` ? (
-                                        <input
-                                            type="text"
-                                            value={item.title}
-                                            onChange={(e) => updateAccordionItem(component.id, item.id, { title: e.target.value })}
-                                            onBlur={() => stopEditing()}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === 'Escape') stopEditing();
-                                            }}
-                                            autoFocus
-                                            style={{
-                                                border: '1px solid #3b82f6',
-                                                borderRadius: '4px',
-                                                padding: '2px 6px',
-                                                fontSize: '14px',
-                                                fontWeight: '500',
-                                                width: '200px'
-                                            }}
-                                        />
-                                    ) : (
-                                        <span
-                                            style={{ fontWeight: '500', color: '#374151', fontSize: '14px' }}
-                                            onClick={(e) => {
-                                                if (!previewMode) {
-                                                    e.stopPropagation();
-                                                    setEditingComponent(`${component.id}-${item.id}-title`);
-                                                }
-                                            }}
-                                        >
-                                            {item.title}
-                                        </span>
-                                    )}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {!previewMode && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    removeAccordionItem(component.id, item.id);
-                                                }}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    color: '#ef4444',
-                                                    cursor: 'pointer',
-                                                    padding: '2px'
-                                                }}
-                                                title="Remove item"
-                                            >
-                                                <Minus size={14} />
-                                            </button>
-                                        )}
-                                        <ChevronDown
-                                            size={16}
-                                            style={{
-                                                color: '#6b7280',
-                                                transform: item.isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                                transition: 'transform 0.2s'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                                {item.isOpen && (
-                                    <div style={{ padding: '12px' }}>
-                                        {editingComponent === `${component.id}-${item.id}-content` ? (
-                                            <textarea
-                                                value={item.content}
-                                                onChange={(e) => updateAccordionItem(component.id, item.id, { content: e.target.value })}
-                                                onBlur={() => stopEditing()}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Escape') stopEditing();
-                                                }}
-                                                autoFocus
-                                                style={{
-                                                    border: '1px solid #3b82f6',
-                                                    borderRadius: '4px',
-                                                    padding: '6px',
-                                                    fontSize: '13px',
-                                                    width: '100%',
-                                                    height: '60px',
-                                                    resize: 'none'
-                                                }}
-                                            />
-                                        ) : (
-                                            <p
-                                                style={{
-                                                    margin: 0,
-                                                    color: '#6b7280',
-                                                    fontSize: '13px',
-                                                    lineHeight: 1.5,
-                                                    cursor: previewMode ? 'default' : 'pointer'
-                                                }}
-                                                onClick={(e) => {
-                                                    if (!previewMode) {
-                                                        e.stopPropagation();
-                                                        setEditingComponent(`${component.id}-${item.id}-content`);
-                                                    }
-                                                }}
-                                            >
-                                                {item.content}
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                        {!previewMode && (
-                            <div style={{
-                                padding: '8px',
-                                borderTop: '1px solid #e5e7eb',
-                                backgroundColor: '#f9fafb',
-                                textAlign: 'center'
-                            }}>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        addAccordionItem(component.id);
-                                    }}
-                                    style={{
-                                        background: 'none',
-                                        border: '1px dashed #9ca3af',
-                                        color: '#6b7280',
-                                        cursor: 'pointer',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '12px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        margin: '0 auto'
-                                    }}
-                                >
-                                    <Plus size={12} /> Add Section
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                );
-                break;
-
-            case 'tabs':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        {/* Tab Headers */}
-                        <div style={{
-                            display: 'flex',
-                            backgroundColor: '#f9fafb',
-                            borderBottom: '1px solid #e5e7eb'
-                        }}>
-                            {component.tabs.map((tab, index) => (
-                                <div
-                                    key={tab.id}
-                                    style={{
-                                        padding: '8px 12px',
-                                        cursor: 'pointer',
-                                        backgroundColor: component.activeTab === index ? '#ffffff' : 'transparent',
-                                        borderBottom: component.activeTab === index ? '2px solid #3b82f6' : '2px solid transparent',
-                                        fontSize: '13px',
-                                        fontWeight: '500',
-                                        color: component.activeTab === index ? '#3b82f6' : '#6b7280',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px'
-                                    }}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        updateComponent(component.id, { activeTab: index });
-                                    }}
-                                >
-                                    {editingComponent === `${component.id}-tab-${tab.id}-title` ? (
-                                        <input
-                                            type="text"
-                                            value={tab.title}
-                                            onChange={(e) => {
-                                                const newTabs = component.tabs.map(t =>
-                                                    t.id === tab.id ? { ...t, title: e.target.value } : t
-                                                );
-                                                updateComponent(component.id, { tabs: newTabs });
-                                            }}
-                                            onBlur={() => stopEditing()}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === 'Escape') stopEditing();
-                                            }}
-                                            autoFocus
-                                            style={{
-                                                border: '1px solid #3b82f6',
-                                                borderRadius: '4px',
-                                                padding: '2px 4px',
-                                                fontSize: '13px',
-                                                width: '80px'
-                                            }}
-                                        />
-                                    ) : (
-                                        <span
-                                            onClick={(e) => {
-                                                if (!previewMode) {
-                                                    e.stopPropagation();
-                                                    setEditingComponent(`${component.id}-tab-${tab.id}-title`);
-                                                }
-                                            }}
-                                        >
-                                            {tab.title}
-                                        </span>
-                                    )}
-                                    {!previewMode && component.tabs.length > 1 && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                removeTab(component.id, tab.id);
-                                            }}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: '#ef4444',
-                                                cursor: 'pointer',
-                                                padding: '1px'
-                                            }}
-                                            title="Remove tab"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            {!previewMode && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        addTab(component.id);
-                                    }}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#9ca3af',
-                                        cursor: 'pointer',
-                                        padding: '8px',
-                                        fontSize: '12px'
-                                    }}
-                                    title="Add tab"
-                                >
-                                    <Plus size={14} />
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Tab Content */}
-                        <div style={{ padding: '12px' }}>
-                            {component.tabs[component.activeTab] && (
-                                editingComponent === `${component.id}-tab-${component.tabs[component.activeTab].id}-content` ? (
-                                    <textarea
-                                        value={component.tabs[component.activeTab].content}
-                                        onChange={(e) => {
-                                            const newTabs = component.tabs.map(t =>
-                                                t.id === component.tabs[component.activeTab].id
-                                                    ? { ...t, content: e.target.value }
-                                                    : t
-                                            );
-                                            updateComponent(component.id, { tabs: newTabs });
-                                        }}
-                                        onBlur={() => stopEditing()}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Escape') stopEditing();
-                                        }}
-                                        autoFocus
-                                        style={{
-                                            border: '1px solid #3b82f6',
-                                            borderRadius: '4px',
-                                            padding: '6px',
-                                            fontSize: '13px',
-                                            width: '100%',
-                                            height: '120px',
-                                            resize: 'none'
-                                        }}
-                                    />
-                                ) : (
-                                    <p
-                                        style={{
-                                            margin: 0,
-                                            color: '#374151',
-                                            fontSize: '13px',
-                                            lineHeight: 1.5,
-                                            cursor: previewMode ? 'default' : 'pointer'
-                                        }}
-                                        onClick={(e) => {
-                                            if (!previewMode) {
-                                                e.stopPropagation();
-                                                setEditingComponent(`${component.id}-tab-${component.tabs[component.activeTab].id}-content`);
-                                            }
-                                        }}
-                                    >
-                                        {component.tabs[component.activeTab].content}
-                                    </p>
-                                )
-                            )}
-                        </div>
-                    </div>
-                );
-                break;
-
-            case 'table':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ backgroundColor: '#f9fafb' }}>
-                                    {component.headers.map((header, colIndex) => (
-                                        <th
-                                            key={colIndex}
-                                            style={{
-                                                padding: '8px',
-                                                textAlign: 'left',
-                                                borderBottom: '1px solid #e5e7eb',
-                                                fontSize: '12px',
-                                                fontWeight: '600',
-                                                color: '#374151',
-                                                position: 'relative'
-                                            }}
-                                        >
-                                            {editingComponent === `${component.id}-header-${colIndex}` ? (
-                                                <input
-                                                    type="text"
-                                                    value={header}
-                                                    onChange={(e) => {
-                                                        const newHeaders = [...component.headers];
-                                                        newHeaders[colIndex] = e.target.value;
-                                                        updateComponent(component.id, { headers: newHeaders });
-                                                    }}
-                                                    onBlur={() => stopEditing()}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' || e.key === 'Escape') stopEditing();
-                                                    }}
-                                                    autoFocus
-                                                    style={{
-                                                        border: '1px solid #3b82f6',
-                                                        borderRadius: '4px',
-                                                        padding: '2px 4px',
-                                                        fontSize: '12px',
-                                                        width: '100%'
-                                                    }}
-                                                />
-                                            ) : (
-                                                <span
-                                                    onClick={(e) => {
-                                                        if (!previewMode) {
-                                                            e.stopPropagation();
-                                                            setEditingComponent(`${component.id}-header-${colIndex}`);
-                                                        }
-                                                    }}
-                                                    style={{ cursor: previewMode ? 'default' : 'pointer' }}
-                                                >
-                                                    {header}
-                                                </span>
-                                            )}
-                                            {!previewMode && component.headers.length > 1 && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        removeTableColumn(component.id, colIndex);
-                                                    }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: '2px',
-                                                        right: '2px',
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        color: '#ef4444',
-                                                        cursor: 'pointer',
-                                                        fontSize: '10px'
-                                                    }}
-                                                    title="Remove column"
-                                                >
-                                                    <X size={10} />
-                                                </button>
-                                            )}
-                                        </th>
-                                    ))}
-                                    {!previewMode && (
-                                        <th style={{ padding: '4px', width: '20px' }}>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    addTableColumn(component.id);
-                                                }}
-                                                style={{
-                                                    background: 'none',
-                                                    border: '1px dashed #9ca3af',
-                                                    borderRadius: '2px',
-                                                    color: '#6b7280',
-                                                    cursor: 'pointer',
-                                                    padding: '2px',
-                                                    fontSize: '10px'
-                                                }}
-                                                title="Add column"
-                                            >
-                                                <Plus size={10} />
-                                            </button>
-                                        </th>
-                                    )}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {component.rows.map((row, rowIndex) => (
-                                    <tr key={rowIndex}>
-                                        {row.map((cell, colIndex) => (
-                                            <td
-                                                key={colIndex}
-                                                style={{
-                                                    padding: '6px 8px',
-                                                    borderBottom: '1px solid #f3f4f6',
-                                                    fontSize: '11px',
-                                                    color: '#374151',
-                                                    position: 'relative'
-                                                }}
-                                            >
-                                                {editingComponent === `${component.id}-cell-${rowIndex}-${colIndex}` ? (
-                                                    <input
-                                                        type="text"
-                                                        value={cell}
-                                                        onChange={(e) => {
-                                                            const newRows = [...component.rows];
-                                                            newRows[rowIndex][colIndex] = e.target.value;
-                                                            updateComponent(component.id, { rows: newRows });
-                                                        }}
-                                                        onBlur={() => stopEditing()}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key === 'Enter' || e.key === 'Escape') stopEditing();
-                                                        }}
-                                                        autoFocus
-                                                        style={{
-                                                            border: '1px solid #3b82f6',
-                                                            borderRadius: '4px',
-                                                            padding: '2px 4px',
-                                                            fontSize: '11px',
-                                                            width: '100%'
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <span
-                                                        onClick={(e) => {
-                                                            if (!previewMode) {
-                                                                e.stopPropagation();
-                                                                setEditingComponent(`${component.id}-cell-${rowIndex}-${colIndex}`);
-                                                            }
-                                                        }}
-                                                        style={{ cursor: previewMode ? 'default' : 'pointer' }}
-                                                    >
-                                                        {cell}
-                                                    </span>
-                                                )}
-                                            </td>
-                                        ))}
-                                        {!previewMode && (
-                                            <td style={{ padding: '2px', width: '20px' }}>
-                                                {component.rows.length > 1 && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            removeTableRow(component.id, rowIndex);
-                                                        }}
-                                                        style={{
-                                                            background: 'none',
-                                                            border: 'none',
-                                                            color: '#ef4444',
-                                                            cursor: 'pointer',
-                                                            fontSize: '10px'
-                                                        }}
-                                                        title="Remove row"
-                                                    >
-                                                        <Minus size={10} />
-                                                    </button>
-                                                )}
-                                            </td>
-                                        )}
-                                    </tr>
-                                ))}
-                                {!previewMode && (
-                                    <tr>
-                                        <td
-                                            colSpan={component.headers.length + 1}
-                                            style={{
-                                                padding: '4px',
-                                                textAlign: 'center',
-                                                borderBottom: '1px solid #e5e7eb'
-                                            }}
-                                        >
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    addTableRow(component.id);
-                                                }}
-                                                style={{
-                                                    background: 'none',
-                                                    border: '1px dashed #9ca3af',
-                                                    borderRadius: '4px',
-                                                    color: '#6b7280',
-                                                    cursor: 'pointer',
-                                                    padding: '2px 6px',
-                                                    fontSize: '10px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '2px',
-                                                    margin: '0 auto'
-                                                }}
-                                                title="Add row"
-                                            >
-                                                <Plus size={10} /> Add Row
-                                            </button>
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                );
-                break;
-
-            case 'text':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            padding: '6px',
-                            backgroundColor: '#ffffff',
-                            borderRadius: '6px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        <EditableText
-                            component={component}
-                            field="content"
-                            placeholder="Click to edit text content"
-                            style={{
-                                fontSize: component.fontSize,
-                                color: component.color,
-                                lineHeight: component.lineHeight,
-                                margin: 0,
-                                width: '100%'
-                            }}
-                        />
-                    </div>
-                );
-                break;
-
-            case 'image':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            backgroundColor: '#ffffff',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        {component.src ? (
-                            <>
-                                <img
-                                    src={component.src}
-                                    alt={component.alt}
-                                    style={{
-                                        width: '100%',
-                                        height: 'calc(100% - 25px)',
-                                        objectFit: 'cover'
-                                    }}
-                                />
-                                <div style={{ padding: '2px 6px' }}>
-                                    <EditableText
-                                        component={component}
-                                        field="caption"
-                                        placeholder="Click to add caption"
-                                        style={{
-                                            fontSize: '12px',
-                                            color: '#6b7280',
-                                            fontStyle: 'italic',
-                                            textAlign: 'center',
-                                            margin: 0
-                                        }}
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <div style={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: '#f3f4f6',
-                                color: '#6b7280'
-                            }}>
-                                <Upload size={32} style={{ marginBottom: '12px' }} />
-                                <p style={{ margin: '0 0 12px 0', fontWeight: '500' }}>Click to upload image</p>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                        if (e.target.files[0]) {
-                                            handleImageUpload(component.id, e.target.files[0]);
-                                        }
-                                    }}
-                                    style={{
-                                        padding: '6px 12px',
-                                        backgroundColor: '#3b82f6',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontSize: '12px'
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </div>
-                        )}
-                    </div>
-                );
-                break;
-
-            case 'didyouknow':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            backgroundColor: '#fef3c7',
-                            borderLeft: '4px solid #f59e0b',
-                            borderRadius: '8px',
-                            padding: '8px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                            <Lightbulb size={16} style={{ color: '#d97706', marginRight: '6px', marginTop: '2px', flexShrink: 0 }} />
-                            <div style={{ flex: 1 }}>
-                                <EditableText
-                                    component={component}
-                                    field="title"
-                                    placeholder="Click to edit title"
-                                    style={{
-                                        color: '#92400e',
-                                        margin: '0 0 4px 0',
-                                        fontSize: '13px',
-                                        fontWeight: '600'
-                                    }}
-                                />
-                                <EditableText
-                                    component={component}
-                                    field="content"
-                                    placeholder="Click to add interesting fact"
-                                    style={{
-                                        color: '#78350f',
-                                        margin: 0,
-                                        fontSize: '12px',
-                                        lineHeight: 1.4
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                );
-                break;
-
-            case 'highlight':
-                const variants = {
-                    info: { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
-                    warning: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
-                    success: { bg: '#d1fae5', border: '#10b981', text: '#065f46' },
-                    error: { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' }
-                };
-                const variant = variants[component.variant] || variants.info;
-
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            backgroundColor: variant.bg,
-                            borderLeft: `4px solid ${variant.border}`,
-                            borderRadius: '8px',
-                            padding: '8px',
-                            display: 'flex',
-                            alignItems: 'center'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        <EditableText
-                            component={component}
-                            field="content"
-                            placeholder="Click to add important information"
-                            style={{
-                                color: variant.text,
-                                fontWeight: '500',
-                                margin: 0,
-                                fontSize: '12px'
-                            }}
-                        />
-                    </div>
-                );
-                break;
-
-            case 'quote':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            backgroundColor: '#f8fafc',
-                            borderLeft: '4px solid #64748b',
-                            borderRadius: '8px',
-                            padding: '10px',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        <blockquote style={{ margin: 0 }}>
-                            <EditableText
-                                component={component}
-                                field="text"
-                                placeholder="Click to add quote text"
-                                style={{
-                                    fontSize: '14px',
-                                    fontStyle: 'italic',
-                                    color: '#374151',
-                                    margin: '0 0 6px 0',
-                                    lineHeight: 1.4
-                                }}
-                            />
-                            <EditableText
-                                component={component}
-                                field="author"
-                                placeholder="Click to add author"
-                                style={{
-                                    color: '#6b7280',
-                                    fontWeight: '500',
-                                    fontSize: '12px'
-                                }}
-                            />
-                        </blockquote>
-                    </div>
-                );
-                break;
-
-            case 'video':
-                content = (
-                    <div
-                        style={{
-                            ...commonStyle,
-                            ...selectionStyle,
-                            backgroundColor: '#1f2937',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                        }}
-                        onMouseDown={(e) => handleComponentMouseDown(e, component.id)}
-                    >
-                        <div style={{
-                            position: 'relative',
-                            width: '100%',
-                            height: '100%',
-                            backgroundColor: '#374151',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            padding: '12px'
-                        }}>
-                            <Video size={28} style={{ marginBottom: '8px', opacity: 0.7 }} />
-                            <EditableText
-                                component={component}
-                                field="title"
-                                placeholder="Click to add video title"
-                                style={{
-                                    color: 'white',
-                                    margin: '0 0 4px 0',
-                                    fontSize: '13px',
-                                    fontWeight: '600',
-                                    textAlign: 'center'
-                                }}
-                            />
-                            <EditableText
-                                component={component}
-                                field="url"
-                                placeholder="Click to add video URL"
-                                style={{
-                                    color: '#d1d5db',
-                                    margin: 0,
-                                    fontSize: '10px',
-                                    textAlign: 'center'
-                                }}
-                            />
-                        </div>
-                    </div>
-                );
-                break;
-
-            default:
-                content = null;
-        }
-
-        return (
-            <div>
-                {content}
-                {isSelected && !isEditing && (
-                    <>
-                        {/* Control buttons */}
-                        <div style={{
-                            position: 'absolute',
-                            left: component.x,
-                            top: component.y - 40,
-                            display: 'flex',
-                            gap: '4px',
-                            backgroundColor: '#1f2937',
-                            padding: '4px',
-                            borderRadius: '6px',
-                            zIndex: 10000
-                        }}>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); startEditing(component.id); }}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'white',
-                                    padding: '4px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center'
-                                }}
-                                title="Edit"
-                            >
-                                <Edit3 size={14} />
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); duplicateComponent(component.id); }}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'white',
-                                    padding: '4px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center'
-                                }}
-                                title="Duplicate"
-                            >
-                                <Copy size={14} />
-                            </button>
-                            <button
-                                onClick={(e) => { e.stopPropagation(); deleteComponent(component.id); }}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: '#ef4444',
-                                    padding: '4px',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center'
-                                }}
-                                title="Delete"
-                            >
-                                <Trash2 size={14} />
-                            </button>
-                        </div>
-
-                        {/* Resize handles */}
-                        <div
-                            style={{
-                                position: 'absolute',
-                                left: component.x + component.width - 6,
-                                top: component.y + component.height - 6,
-                                width: '12px',
-                                height: '12px',
-                                backgroundColor: '#3b82f6',
-                                cursor: 'se-resize',
-                                border: '2px solid white',
-                                borderRadius: '2px',
-                                zIndex: 10001
-                            }}
-                            onMouseDown={(e) => handleResizeStart(e, component.id, 'se')}
-                            title="Resize"
-                        />
-                        <div
-                            style={{
-                                position: 'absolute',
-                                left: component.x + component.width - 6,
-                                top: component.y + component.height / 2 - 6,
-                                width: '12px',
-                                height: '12px',
-                                backgroundColor: '#3b82f6',
-                                cursor: 'e-resize',
-                                border: '2px solid white',
-                                borderRadius: '2px',
-                                zIndex: 10001
-                            }}
-                            onMouseDown={(e) => handleResizeStart(e, component.id, 'e')}
-                            title="Resize width"
-                        />
-                        <div
-                            style={{
-                                position: 'absolute',
-                                left: component.x + component.width / 2 - 6,
-                                top: component.y + component.height - 6,
-                                width: '12px',
-                                height: '12px',
-                                backgroundColor: '#3b82f6',
-                                cursor: 's-resize',
-                                border: '2px solid white',
-                                borderRadius: '2px',
-                                zIndex: 10001
-                            }}
-                            onMouseDown={(e) => handleResizeStart(e, component.id, 's')}
-                            title="Resize height"
-                        />
-                    </>
-                )}
-            </div>
-        );
-    };
-
     return (
-        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'system-ui, sans-serif' }}>
-            {/* Header */}
-            <div style={{
-                backgroundColor: 'white',
-                borderBottom: '1px solid #e5e7eb',
-                padding: '12px 24px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-                <h1 style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#1f2937' }}>
-                    📖 InstructoHub Magazine Builder
-                </h1>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                    <button
-                        onClick={() => setPreviewMode(!previewMode)}
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            backgroundColor: previewMode ? '#3b82f6' : '#f3f4f6',
-                            color: previewMode ? 'white' : '#374151',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontWeight: '500'
-                        }}
-                    >
-                        <Eye size={16} />
-                        {previewMode ? 'Edit Mode' : 'Preview'}
-                    </button>
-                    <button
-                        style={{
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            backgroundColor: '#10b981',
-                            color: 'white',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontWeight: '500'
-                        }}
-                    >
-                        <Save size={16} />
-                        Save Page
-                    </button>
-                </div>
-            </div>
-
-            <div style={{ flex: 1, display: 'flex' }}>
-                {/* Sidebar */}
-                {!previewMode && (
-                    <div style={{
-                        width: '280px',
-                        backgroundColor: '#f8fafc',
-                        borderRight: '1px solid #e5e7eb',
-                        overflow: 'auto'
-                    }}>
-                        <div style={{ padding: '20px' }}>
-                            <h2 style={{
-                                margin: '0 0 16px 0',
-                                fontSize: '16px',
-                                fontWeight: '600',
-                                color: '#374151'
-                            }}>
-                                📦 Components
-                            </h2>
-                            <p style={{
-                                fontSize: '12px',
-                                color: '#6b7280',
-                                margin: '0 0 16px 0'
-                            }}>
-                                Drag components onto the canvas, then click to edit text or upload images
-                            </p>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                {componentLibrary.map((component) => {
-                                    const IconComponent = component.icon;
-                                    return (
-                                        <div
-                                            key={component.id}
-                                            draggable
-                                            onDragStart={(e) => handleDragStart(e, component.id)}
-                                            style={{
-                                                padding: '12px 8px',
-                                                backgroundColor: 'white',
-                                                borderRadius: '8px',
-                                                cursor: 'grab',
-                                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                                border: '1px solid #e5e7eb',
-                                                transition: 'all 0.2s',
-                                                textAlign: 'center'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.target.style.transform = 'translateY(-2px)';
-                                                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.target.style.transform = 'translateY(0)';
-                                                e.target.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                                            }}
-                                        >
-                                            <div style={{
-                                                width: '28px',
-                                                height: '28px',
-                                                margin: '0 auto 6px',
-                                                borderRadius: '6px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }} className={component.color}>
-                                                <IconComponent size={16} color="white" />
-                                            </div>
-                                            <p style={{
-                                                margin: 0,
-                                                fontSize: '11px',
-                                                fontWeight: '500',
-                                                color: '#374151'
-                                            }}>
-                                                {component.name}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Canvas */}
-                <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
-                    <div
-                        ref={canvasRef}
-                        style={{
-                            minHeight: '100%',
-                            backgroundColor: canvasBackground,
-                            position: 'relative',
-                            backgroundImage: !previewMode ? 'radial-gradient(circle, #e5e7eb 1px, transparent 1px)' : 'none',
-                            backgroundSize: !previewMode ? '20px 20px' : 'auto'
-                        }}
-                        onClick={handleCanvasClick}
+        <BuilderContext.Provider value={contextValue}>
+            <div className="h-screen w-screen flex flex-col font-sans bg-gray-100">
+                <Header
+                    previewMode={previewMode}
+                    onTogglePreview={() => setPreviewMode(!previewMode)}
+                    onSave={() => alert(JSON.stringify(components))}
+                />
+                <div className="flex-1 flex overflow-hidden">
+                    {!previewMode && <Sidebar onDragStart={handleSidebarDragStart} />}
+                    <Canvas
+                        components={components}
                         onDrop={handleCanvasDrop}
                         onDragOver={handleCanvasDragOver}
+                        onClick={handleCanvasClick}
                     >
-                        {components.length === 0 && !previewMode && (
-                            <div style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                textAlign: 'center',
-                                color: '#9ca3af'
-                            }}>
-                                <Layers size={64} style={{ margin: '0 auto 16px' }} />
-                                <h3 style={{ fontSize: '24px', fontWeight: '600', margin: '0 0 8px 0' }}>
-                                    Create Your Magazine Page
-                                </h3>
-                                <p style={{ fontSize: '16px', margin: '0 0 8px 0' }}>
-                                    Drag components from the sidebar and position them anywhere
-                                </p>
-                                <p style={{ fontSize: '14px', margin: 0, color: '#6b7280' }}>
-                                    Click any text to edit • Upload images • Drag to move
-                                </p>
-                            </div>
-                        )}
-
-                        {components.map(component => (
-                            <ComponentRenderer key={component.id} component={component} />
-                        ))}
-                    </div>
+                        {(node) => {
+                            canvasRef.current = node;
+                        }}
+                    </Canvas>
                 </div>
             </div>
-        </div>
+        </BuilderContext.Provider>
     );
 };
-
 export default InteractiveMagazineBuilder;
