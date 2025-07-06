@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/static/css/main.95c23360.css",
-    "main.js": "/static/js/main.64b0cc8e.js",
-    "index.html": "/index.html",
-    "main.95c23360.css.map": "/static/css/main.95c23360.css.map",
-    "main.64b0cc8e.js.map": "/static/js/main.64b0cc8e.js.map"
+    "main.css": "/InstructoHub_React_Testing_AI_Tools/static/css/main.95c23360.css",
+    "main.js": "/InstructoHub_React_Testing_AI_Tools/static/js/main.02282f37.js",
+    "index.html": "/InstructoHub_React_Testing_AI_Tools/index.html",
+    "main.95c23360.css.map": "/InstructoHub_React_Testing_AI_Tools/static/css/main.95c23360.css.map",
+    "main.02282f37.js.map": "/InstructoHub_React_Testing_AI_Tools/static/js/main.02282f37.js.map"
   },
   "entrypoints": [
     "static/css/main.95c23360.css",
-    "static/js/main.64b0cc8e.js"
+    "static/js/main.02282f37.js"
   ]
 }
