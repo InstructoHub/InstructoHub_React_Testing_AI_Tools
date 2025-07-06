@@ -1,5 +1,6 @@
 {
   "name": "projectname",
+  "homepage": "https://instructohub.github.io/InstructoHub_React_Testing_AI_Tools",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -17,7 +18,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "predeploy": "npm run build && cp build/index.html build/404.html",
+    "predeploy": "npm run build && node copy404.js",
     "deploy": "gh-pages -d build",
     "build": "react-scripts build",
     "test": "react-scripts test",

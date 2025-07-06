@@ -7,9 +7,9 @@ function App() {
   return (
     <Router>
       <Routes>
-          <Route path="/1" element={<AuthoringToolLandingPage />} />
-          <Route path="/2" element={<VideoEngineLandingPage />} />
-          <Route path="/2" element={<VideoEngineChatBot />} />
+          <Route path="/InstructoHub_React_Testing_AI_Tools/1" element={<AuthoringToolLandingPage />} />
+          <Route path="/InstructoHub_React_Testing_AI_Tools/2" element={<VideoEngineLandingPage />} />
+          <Route path="/InstructoHub_React_Testing_AI_Tools/3" element={<VideoEngineChatBot />} />
       </Routes>
     </Router>
   );
