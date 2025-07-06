@@ -1,0 +1,216 @@
+{
+    "title": "Steam Boiler: Introduction and Selection Factors",
+    "description": "Learn about steam boilers, their applications, advantages, and factors to consider when selecting the right boiler for industrial use.",
+    "videoUrl": "video1.mp4",
+    "subtitles": [
+        {
+            "start": 0.42,
+            "end": 1.44,
+            "text": "What is a steam boiler?"
+        },
+        {
+            "start": 2.4,
+            "end": 5.3,
+            "text": "State the factors to be considered while selecting a boiler."
+        },
+        {
+            "start": 8.21,
+            "end": 12.61,
+            "text": "Today, steam has become an integral and essential part of all the major industries."
+        },
+        {
+            "start": 13.63,
+            "end": 43.27,
+            "text": "It is used extensively in locomotives, marines, power plants, food processing units, textile industries, chemical industries and medical industries etc."
+        },
+        {
+            "start": 45.42,
+            "end": 49.94,
+            "text": "Have you ever wondered why steam finds its utility in all these industries?"
+        },
+        {
+            "start": 51.52,
+            "end": 59.92,
+            "text": "The main reasons for using steam are- It can store 5-6 times more heat energy compared to an equivalent mass of water."
+        },
+        {
+            "start": 61.42,
+            "end": 66.62,
+            "text": "It can be generated at high pressure to produce steam of high temperature and high thermal energy."
+        },
+        {
+            "start": 68.04,
+            "end": 71.64,
+            "text": "It is easier to control steam carrying large amount of energy."
+        },
+        {
+            "start": 72.7,
+            "end": 74.16,
+            "text": "It is very cost effective."
+        },
+        {
+            "start": 75.76,
+            "end": 80.26,
+            "text": "It is non-hazardous to health, environmentally sound and hygienic in nature."
+        },
+        {
+            "start": 81.48,
+            "end": 83.98,
+            "text": "A variety of fuels can be used for steam production."
+        },
+        {
+            "start": 88.13,
+            "end": 99.99,
+            "text": "To utilize the heat transfer advantages of steam in industries, scientists came up with a closed vessel type apparatus which can produce the desired amount of steam by the combustion of fuels."
+        },
+        {
+            "start": 102.51,
+            "end": 104.69,
+            "text": "Such an apparatus is called a steam boiler."
+        },
+        {
+            "start": 108.26,
+            "end": 115.78,
+            "text": "Thus, steam boiler is a closed vessel type apparatus which can produce desired steam from water by the combustion of fuel."
+        },
+        {
+            "start": 117.18,
+            "end": 133.3,
+            "text": "Also, according to the American Society of Mechanical Engineers, steam boiler is a combination of apparatus for producing furnishing or recovering heat together with the apparatus for transferring the heat so made available to the fluid being heated and vaporized."
+        },
+        {
+            "start": 134.68,
+            "end": 165.52,
+            "text": "The vital parts of a typical boiler are- The factors to be considered while selecting the type and size of a boiler are- Note that the essential requirements of a good steam boiler are- Related terms are-"
+        }
+    ],
+    "questions": [
+        {
+            "id": 1,
+            "timestamp": 30,
+            "type": "true_false",
+            "question": "Steam is used extensively in locomotives, power plants, and food processing units.",
+            "options": [
+                "True",
+                "False"
+            ],
+            "correctAnswer": 0
+        },
+        {
+            "id": 2,
+            "timestamp": 45,
+            "type": "fill_blank",
+            "question": "Steam finds its utility in all major industries because it can store _______ times more heat energy compared to water.",
+            "options": [
+                "2-3",
+                "5-6",
+                "8-9",
+                "10-12"
+            ],
+            "correctAnswer": 1
+        },
+        {
+            "id": 3,
+            "timestamp": 60,
+            "type": "mcq",
+            "question": "How many times more heat energy can steam store compared to an equivalent mass of water?",
+            "options": [
+                "3-4 times",
+                "5-6 times",
+                "7-8 times",
+                "9-10 times"
+            ],
+            "correctAnswer": 1
+        },
+        {
+            "id": 4,
+            "timestamp": 75,
+            "type": "true_false",
+            "question": "Steam is very cost effective.",
+            "options": [
+                "True",
+                "False"
+            ],
+            "correctAnswer": 0
+        },
+        {
+            "id": 5,
+            "timestamp": 90,
+            "type": "fill_blank",
+            "question": "Steam is _______ to health, environmentally sound and hygienic in nature.",
+            "options": [
+                "hazardous",
+                "non-hazardous",
+                "dangerous",
+                "toxic"
+            ],
+            "correctAnswer": 1
+        },
+        {
+            "id": 6,
+            "timestamp": 105,
+            "type": "true_false",
+            "question": "A steam boiler is an open vessel type apparatus.",
+            "options": [
+                "True",
+                "False"
+            ],
+            "correctAnswer": 1
+        },
+        {
+            "id": 7,
+            "timestamp": 120,
+            "type": "mcq",
+            "question": "Which organization provided the definition of steam boiler mentioned in the video?",
+            "options": [
+                "American Society of Civil Engineers",
+                "American Society of Mechanical Engineers",
+                "Institute of Electrical Engineers",
+                "American National Standards Institute"
+            ],
+            "correctAnswer": 1
+        },
+        {
+            "id": 8,
+            "timestamp": 140,
+            "type": "fill_blank",
+            "question": "Steam boiler is a _______ vessel type apparatus which can produce desired steam from water.",
+            "options": [
+                "open",
+                "closed",
+                "transparent",
+                "flexible"
+            ],
+            "correctAnswer": 1
+        }
+    ],
+    "pointsToRemember": [
+        "Steam can store 5-6 times more heat energy compared to equivalent mass of water",
+        "Steam is used in locomotives, power plants, food processing, textile, chemical and medical industries",
+        "Steam is cost effective, non-hazardous, environmentally sound and hygienic",
+        "A variety of fuels can be used for steam production",
+        "Steam boiler is a closed vessel apparatus that produces steam from water by fuel combustion",
+        "ASME defines steam boiler as apparatus for producing and transferring heat to fluid being vaporized",
+        "Selection of boiler depends on various factors including type and size requirements"
+    ],
+    "recommendedVideos": [
+        {
+            "id": 1,
+            "title": "Types of Steam Boilers",
+            "thumbnail": "/assets/images/placeholder.png",
+            "duration": "18:45"
+        },
+        {
+            "id": 2,
+            "title": "Boiler Efficiency and Performance",
+            "thumbnail": "/assets/images/placeholder.png",
+            "duration": "22:30"
+        },
+        {
+            "id": 3,
+            "title": "Steam Power Plant Operations",
+            "thumbnail": "/assets/images/placeholder.png",
+            "duration": "25:15"
+        }
+    ]
+}
