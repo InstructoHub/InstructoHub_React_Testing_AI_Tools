@@ -197,19 +197,19 @@
         {
             "id": 1,
             "title": "Types of Steam Boilers",
-            "thumbnail": "/assets/images/placeholder.png",
+            "thumbnail": "/InstructoHub_React_Testing_AI_Tools/assets/images/placeholder.png",
             "duration": "18:45"
         },
         {
             "id": 2,
             "title": "Boiler Efficiency and Performance",
-            "thumbnail": "/assets/images/placeholder.png",
+            "thumbnail": "/InstructoHub_React_Testing_AI_Tools/assets/images/placeholder.png",
             "duration": "22:30"
         },
         {
             "id": 3,
             "title": "Steam Power Plant Operations",
-            "thumbnail": "/assets/images/placeholder.png",
+            "thumbnail": "/InstructoHub_React_Testing_AI_Tools/assets/images/placeholder.png",
             "duration": "25:15"
         }
     ]
